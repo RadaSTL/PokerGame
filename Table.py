@@ -33,6 +33,11 @@ class Table(Hand):
     def getMaxBet(self):
         return self.__maxBet
 
+    def getPlayerFromName(self,name):
+        for i in self.__players:
+            if i.getPlayerName() == name:
+                return i
+
     def setMaxBet(self, bet):
         self.__maxBet = bet
 
@@ -238,10 +243,20 @@ class Table(Hand):
                 if playerDict[i.getPlayerName()] == 0:
                     playerDict[i.getPlayerName()] = kindsList[-1]
 
+        maxPts = 0
+        for keys in playerDict:
+            if playerDict[keys] > maxPts:
+                maxPts = playerDict[keys]
+
+        for keys in playerDict:
+            if playerDict[keys] == maxPts:
+                self.__winningPlayers.append(self.getPlayerFromName(keys))
+                self.__winnerCount += 1
 
 
+        print(playerDict)
+        print(self.__winningPlayers)
 
-            print(playerDict)
 
 
 
