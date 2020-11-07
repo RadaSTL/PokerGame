@@ -1,303 +1,249 @@
-from Player import *
-from Deck import *
+from Hand import *
+import Player as p
+import math as m
+import Deck as d
+import Card as c
 
-class Table(Deck, Player):
+class Table(Hand):
+
     def __init__(self):
-        Player.__init__(self)
-        Deck.__init__(self)
-        self.__playerList = {}
-        self.__playDeck = Deck()
-        self.__minBet = 0
+        super().__init__()
+        self.__hand = Hand()
+        self.__players = []
+        self.__chipsPile = 0
+        self.__dealerHole = 0
+        self.__newDeck = d.Deck()
+        self.__roundCount = 0
         self.__maxBet = 0
-        self.__minEntrance = 0
-        self.__tablePile = []
-        self.__bestHands = {}
+        self.__winnerCount = 0
+        self.__winningPlayers = []
 
-    def getTableCards(self):
-        return self.__tablePile
+    def getTableHand(self):
+        return self.__hand.getHand()
 
-    def getPlayerFromList(self, player):
+    def getPlayers(self):
+        return self.__players
 
-        return self.__playerList[player].getPlayer()
+    def getPlayerByIndex(self, index):
+        return self.__players[index]
 
-    def getPlayerList(self):
-        return self.__playerList
+    def getChipPile(self):
+        return self.__chipsPile
 
-    def getPlayerListInfo(self):
-        strPlayerList = "Current Players on the table:\n"
-        for i in self.__playerList:
-            strPlayerList += self.__playerList[i].getPlayer() + "\n"
+    def getMaxBet(self):
+        return self.__maxBet
 
-        return strPlayerList
+    def setMaxBet(self, bet):
+        self.__maxBet = bet
 
-    def getDeck(self):
-        return self.__playDeck.getDeck()
+    def addPlayerToTable(self, player):
+        self.__players.append(player)
 
-    def CreateTable(self, playerCount = 2, minBet = 0, maxBet = 10, minEntrance = 100, defaultBalance = 1000):
-        self.__minBet = minBet
-        self.__maxBet = maxBet
-        self.__minEntrance = minEntrance
-        self.__playDeck.CreateDeck()
-        for i in range(playerCount):
-            playerName = input("Please enter name of player " + str(i+1) + ": ")
-            self.__playerList[playerName] = Player(playerName,defaultBalance)
-        return True
+    def placeBet(self, bet):
+        self.__chipsPile += bet
 
-    def dealToTable(self):
-        self.__tablePile.append(self.__playDeck.giveCard())
+    def payDividents(self):
 
-    def dealToPlayers(self):
-        for i in self.__playerList:
-            self.__playerList[i].addCard(self.__playDeck.giveCard())
-            self.__playerList[i].addCard(self.__playDeck.giveCard())
-        return True
+        dividentAmount = int(m.floor(self.__chipsPile/self.__winnerCount))
+
+        for i in self.__winningPlayers:
+            i.givePlayerChips(dividentAmount)
+            self.__chipsPile -= dividentAmount
+
+        self.__chipsPile = 0
+
+    def reassignDealerHole(self):
+        self.__dealerHole += 1
+
+        if self.__dealerHole not in range(len(self.__players)):
+            self.__dealerHole = 0
+
+    def startNewRound(self):
+        self.__chipsPile = 0
+        self.__newDeck = d.Deck
+        for i in self.__players:
+            i.removeHand()
+        self.__hand.removeHand()
+        self.__roundCount = 0
+        self.__dealerHole += 1
+        self.__maxBet = 0
+        self.__winnerCount = 0
+        self.__winningPlayers = []
+
+    def dealCards(self):
+        if self.__roundCount == 0:
+            for j in range(2):
+                for i in range(self.__dealerHole+1, len(self.__players)):
+                    self.__players[i].giveCard(self.__newDeck.deal())
+                for i in range(self.__dealerHole+1):
+                    self.__players[i].giveCard(self.__newDeck.deal())
+                self.__hand.giveCard(self.__newDeck.deal())
+        elif len(self.__hand.getHand()) <= 5:
+            self.__hand.giveCard(self.__newDeck.deal())
+        self.__roundCount += 1
+        self.__maxBet = 0
 
     """
-    12 - Royal Flush
-    11 - Stright Flush
-    10 - Four House
-    9 - Full House
-    8 - Flush
-    7 - Straight
-    6 - Three of a Kind
-    4 - Two Pairs
-    1 - One Pair
+    Point Calculation:
+    None - ... High -> Point of Highest Card (e.g. if Player has ♣10 as highest card meaning he has 
+    10-High, his point will be 10)
+    One Pair - Point of the card pair + 1000 (e.g. if player has 10 Pair, the point will be set as 1010)
+    Two Pair - Highest card pairs + 2000 (e.g. if player has 10 Pair and 6 Pair, score will be 2010)
+    Three of a Kind - Point of ToK + 3000 (e.g. 10 ToK + 3000 will be 3010)
+    Straight - 4000 + Highest Card Val
+    Flush - 5000  + Highest Card Val
+    Full-House - 6000 + ToK Card Val
+    Four of a Kind - 7000 + Card Val
+    Straight Flush - 8000 + Highest Card Val
+    Royal Flush - 9000
     """
 
-    def calculatePlayerCombinations(self):
-        playerCombs = {}
-        for i in self.__playerList:
-            tempArr = []
-            tempArr2 = self.__playerList[i].getHand()
-            for y in tempArr2:
-                tempArr.append(Deck.getCardValue(self,y))
-            for y in self.__tablePile:
-                tempArr.append(Deck.getCardValue(self,y))
-            playerCombs[i] = {"TempDeck":tempArr}
-            playerCombs[i]["Combinatios"] = []
+    def checkWin(self):
+        playerPoints = []
+        playerDict = {}
+        tempList = Hand()
+        if len(self.__hand.getHand()) == 5:
+            for i in self.__players:
+                tempList = i
+                tempList.mergeHand(self.__hand.getHand())
+                #tempList.setHand([c.Card(0,2),c.Card(1,3),c.Card(2,4),c.Card(2,5),c.Card(2,6),c.Card(3,7),c.Card(3,9)])
+                print(tempList.getHand())
+                playerDict[i.getPlayerName()] = 0
+                isStraightFlush = False
 
-        for player in playerCombs:
-            tempArr = playerCombs[player]["TempDeck"]
-            tempDict = {}
+                for j in range(4):
+                    StartsWithAce = False
+                    streakCount = 0
+                    suitArray = tempList.getCardValuesBySuit(j)
+                    suitArray.sort()
+                    streakStarter = 0
+                    streakEnd = 0
 
-            for card in tempArr:
-                if card in tempDict:
-                    tempDict[card] += 1
-                else:
-                    tempDict[card] = 1
-                if card%100 in tempDict:
-                    tempDict[card%100] += 1
-                else:
-                    tempDict[card % 100] = 1
-                if int(card/100) in tempDict:
-                    tempDict[int(card/100)] += 1
-                else:
-                    tempDict[int(card/100)] = 1
+                    for l in range(len(suitArray)):
+                        if streakCount < 4:
+                            if l == 0 and suitArray[l] == 2 and suitArray[-1] == 14:
+                                streakCount += 1
+                                if streakCount == 1:
+                                    streakStarter = suitArray[l]-1
+                                StartsWithAce = True
+                                streakEnd = suitArray[l]
+                            elif suitArray[l] == suitArray[l-1] + 1:
+                                streakCount += 1
+                                if streakCount == 1:
+                                    streakStarter = suitArray[l]-1
+                                streakEnd = suitArray[l]
+                            else:
+                                if l == len(suitArray) - 1 and StartsWithAce:
+                                    pass
+                                else:
+                                    streakCount = 0
 
-            for key in tempDict:
-                combType = -1
-                sameColor = None
-                domColor = None
-                isStraight = None
-                handType = 0
-                tempArr2 = []
-                pairVal = 0
-                if tempDict[key] > 1:
-                    if key > 999:
-                        for i in range(tempArr.count(key)):
-                            tempArr2.append(key)
-                        sameColor = False
-                        isStraight = False
-                    elif key > 50:
-                        sortCnt = 0
-                        prevKey = -1
-                        cnt = 0
-                        for i in tempArr:
-                            if key == int(i/100):
-                                tempArr2.append(i)
-                        tempArr2.sort()
-                        for i in tempArr2:
-                            if cnt > 0 and i - prevKey == 1:
-                                sortCnt += 1
-                            prevKey = i
-                            cnt += 1
-                        if sortCnt >= 4:
-                            isStraight = True
-                        sameColor = True
-                        domColor = key
-                        if isStraight == True and tempArr2[-1]%100 != 13:
-                            handType = 11
-                        elif isStraight == True:
-                            handType = 12
-                        elif len(tempArr2) == 5:
-                            handType = 8
+                    if StartsWithAce:
+                        streakEnd = 14
+
+                    if streakCount >= 4:
+                        if streakStarter == 10:
+                            playerDict[i.getPlayerName()] = 9000+streakEnd
+                            isStraightFlush = True
+                        else:
+                            playerDict[i.getPlayerName()] = 8000+streakEnd
+                            isStraightFlush = True
+
+                kindsList = i.getCardValues()
+                kindsList.sort()
+                kindsDic = {}
+                for j in kindsList:
+                    if j not in kindsDic:
+                        kindsDic[j] = 1
                     else:
-                        for i in tempArr:
-                            if i%100 == key:
-                                tempArr2.append(i)
-                        if len(tempArr2) == 2:
-                            handType = 1
-                        if len(tempArr2) == 3:
-                            handType = 6
-                        if len(tempArr2) == 4:
-                            handType = 10
-                        pairVal = tempArr2[0]%100
-                        isStraight = False
-                        sameColor = False
-                if len(tempArr2) > 0 and handType > 0:
-                    playerCombs[player]["Combinatios"].append(
-                        {
-                            "CombArr": tempArr2,
-                            "CombType": handType,
-                            "isSameColor": sameColor,
-                            "Color": domColor,
-                            "isStraight": isStraight,
-                            "pairValue":pairVal
-                        }
-                    )
-            combType = -1
-            sameColor = None
-            domColor = None
-            isStraight = None
-            handType = 0
-            tempArr2 = []
-            tempArr3 = []
-            for i in tempArr:
-                tempArr3.append(i%100)
-            tempArr3.sort()
-            prevIndex = -1
-            cnt = 0
-            sortCnt = 0
-            for y in tempArr:
-                if tempArr3[0] == y % 100 and tempArr3.count(y%100) == 1:
-                    tempArr2.append(y)
-            for i in tempArr3:
-                if cnt > 0 and i - prevIndex == 1:
-                    for y in tempArr:
-                        if i == y%100:
-                            tempArr2.append(y)
-                    sortCnt += 1
-                prevIndex = i
-                cnt += 1
-            if sortCnt >= 5:
-                isStraight = True
-                sameColor = False
-                handType = 7
-            if len(tempArr2) > 0 and handType > 0:
-                playerCombs[player]["Combinatios"].append(
-                    {
-                        "CombArr": tempArr2,
-                        "CombType": handType,
-                        "isSameColor": sameColor,
-                        "Color": domColor,
-                        "isStraight": isStraight,
-                        "pairValue": pairVal
-                    }
-                )
+                        kindsDic[j] += 1
 
-        bestHandDic = {}
-        for player in self.__playerList:
-            bestHandDic[player] = {"Hand":[], "handType":[], "maxVal":0}
-            maxVal = -1
-            combType = -1
+                print(kindsList)
+                print(kindsDic)
+                ToKPoint = 0
+                PairCount = 0
+                TPPoint = 0
+                for keys in kindsDic:
+                    if kindsDic[keys] == 4:
+                        playerDict[i.getPlayerName()] = 7000 + keys
+                        StartsWithAce = True
+                        break
+                    if kindsDic[keys] == 3:
+                        if 3000+keys > ToKPoint:
+                            ToKPoint = 3000+keys
+                    if kindsDic[keys] == 2:
+                        PairCount += 1
+                        if 1000+keys > TPPoint:
+                            TPPoint = 1000+keys
 
-            while len(bestHandDic[player]["Hand"]) < 5:
-                for comb in playerCombs[player]["Combinatios"]:
-                    if combType < comb["CombType"]:
-                        combType = comb["CombType"]
-                    if maxVal < comb["pairValue"]:
-                        maxVal = comb["pairValue"]
-
-                if len(playerCombs[player]["Combinatios"]) <= 0:
-                    bestHandDic[player]["Hand"].append(max(playerCombs[player]["TempDeck"]))
-                else:
-                    for comb in playerCombs[player]["Combinatios"]:
-                        if combType == comb["CombType"] and combType > 1:
-                            for card in comb["CombArr"]:
-                                bestHandDic[player]["Hand"].append(card)
-                            bestHandDic[player]["handType"].append(combType)
-                            if bestHandDic[player]["maxVal"] < maxVal:
-                               bestHandDic[player]["maxVal"] = maxVal
-                        elif maxVal == comb["pairValue"]:
-                            for card in comb["CombArr"]:
-                                bestHandDic[player]["Hand"].append(card)
-                            bestHandDic[player]["handType"].append(combType)
-                            if bestHandDic[player]["maxVal"] < maxVal:
-                               bestHandDic[player]["maxVal"] = maxVal
-
-                maxVal = -1
-                combType = -1
-
-                for comb in playerCombs[player]["Combinatios"]:
-                    for cards in comb["CombArr"]:
-                        if cards in bestHandDic[player]["Hand"]:
-                            try:
-                                playerCombs[player]["Combinatios"].pop(playerCombs[player]["Combinatios"].index(comb))
-                            except:
-                                continue
-                for cards in playerCombs[player]["TempDeck"]:
-                    if cards in bestHandDic[player]["Hand"]:
-                        try:
-                            playerCombs[player]["TempDeck"].pop(playerCombs[player]["TempDeck"].index(cards))
-                        except:
-                            continue
-                if bestHandDic[player]["handType"].count(1) >= 2:
-                    for i in range(bestHandDic[player]["handType"].count(1)):
-                        bestHandDic[player]["handType"].pop(bestHandDic[player]["handType"].index(1))
-                    bestHandDic[player]["handType"].append(4)
-            if len(bestHandDic[player]["handType"]) == 0:
-                bestHandDic[player]["handType"].append(0)
+                if ToKPoint > 3000 and TPPoint > 1000:
+                    playerDict[i.getPlayerName()] = 6000 + ToKPoint%1000
+                elif ToKPoint > 3000:
+                    playerDict[i.getPlayerName()] = ToKPoint
+                elif TPPoint > 1000 and PairCount > 1:
+                    playerDict[i.getPlayerName()] = TPPoint + 1000
+                elif TPPoint > 1000:
+                    playerDict[i.getPlayerName()] = TPPoint
 
 
-        self.__bestHands = bestHandDic
+                if not isStraightFlush:
+                    streakCount = 0
+                    streakStarter = 0
+                    streakEnd = 0
+                    checkList = i.getCardSuits()
+                    checkList.sort()
+                    checkDic = {}
+                    StartsWithAce = False
 
-    def getWinner(self):
-        self.calculatePlayerCombinations()
-        cnt = 0
-        highPlayer = ""
-        highScore = -1
-        highVal = -1
-        highPlayers = []
-        for player in self.__bestHands:
-            if cnt == 0:
-                highPlayer = player
-                highScore = self.__bestHands[player]["handType"][0]
-                highVal = self.__bestHands[player]["maxVal"]
-            elif highScore < self.__bestHands[player]["handType"][0]:
-                highPlayer = player
-                highScore = self.__bestHands[player]["handType"][0]
-                highVal = self.__bestHands[player]["maxVal"]
-            elif highScore == self.__bestHands[player]["handType"][0]:
-                if self.__bestHands[player]["handType"][0] not in [12,11]:
-                    if highVal < self.__bestHands[player]["maxVal"]:
-                        highPlayer = player
-                        highScore = self.__bestHands[player]["handType"][0]
-                        highVal = self.__bestHands[player]["maxVal"]
-                elif highVal < self.__bestHands[player]["maxVal"]:
-                        highPlayers.append(highPlayer)
-                        highPlayers.append(player)
-            else:
-                highPlayers.append(highPlayer)
-                highPlayers.append(player)
-        if len(highPlayers) > 0:
-            return highPlayers
-        else:
-            return highPlayer
+                    for j in checkList:
+                        if j not in checkDic:
+                            checkDic[j] = 1
+                        else:
+                            checkDic[j] += 1
+
+                    for keys in checkDic:
+                        if checkDic[keys] >= 5:
+                            suitArray = i.getCardValuesBySuit(keys)
+                            suitArray.sort()
+
+                            if playerDict[i.getPlayerName()] < 5000 + suitArray[-1]:
+                                playerDict[i.getPlayerName()] = 5000 + suitArray[-1]
+
+                    for l in range(len(kindsList)):
+                        if streakCount < 4:
+                            if l == 0 and kindsList[l] == 2 and kindsList[-1] == 14:
+                                streakCount += 1
+                                if streakCount == 1:
+                                    streakStarter = kindsList[l] - 1
+                                StartsWithAce = True
+                                streakEnd = kindsList[l]
+                            elif kindsList[l] == kindsList[l - 1] + 1:
+                                streakCount += 1
+                                if streakCount == 1:
+                                    streakStarter = kindsList[l] - 1
+                                streakEnd = kindsList[l]
+                            else:
+                                if l == len(kindsList) - 1 and StartsWithAce:
+                                    pass
+                                else:
+                                    streakCount = 0
+
+                    if StartsWithAce:
+                        streakEnd = 14
+
+                    if streakCount >= 4:
+                        if playerDict[i.getPlayerName()] < 4000 + kindsList[-1]:
+                            playerDict[i.getPlayerName()] = 4000+streakEnd
+
+                if playerDict[i.getPlayerName()] == 0:
+                    playerDict[i.getPlayerName()] = kindsList[-1]
 
 
 
 
-        print(self.__bestHands)
+            print(playerDict)
 
 
 
 
 
-"""
-    def CheatHand(self):
-        tempArr = [9010,9110,9210,9310,9013]
-        tempArr2 = []
-        for i in tempArr:
-            tempArr2.append(Deck.getCardFromValue(self,i))
-        self.__playerList["a"].setHand(tempArr2)
-"""

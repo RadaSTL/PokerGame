@@ -1,63 +1,37 @@
+from Hand import *
 
-class Player:
+class Player(Hand):
 
-    def __init__(self, playerName = None, balance = 0):
-        self.__playerName = playerName
-        self.__balance = balance
-        self.__lastBet = 0
-        self.__currentWinnings = 0
-        self.__hand = []
-        self.__combinations = []
+    def __init__(self, Name=None):
+        super().__init__()
+        self.__name = Name
+        self.__chips = 0
+        self.__hand = Hand()
+        self.__isAllIn = False
+
+    def __repr__(self):
+        return self.__name
+
+    def getChips(self):
+        return self.__chips
 
     def getPlayerName(self):
-        return self.__playerName
+        return self.__name
 
-    def getBalance(self):
-        return self.__balance
+    def getPlayerBet(self):
+        return self.__name
 
-    def getLastBet(self):
-        return self.__lastBet
+    def givePlayerChips(self, chipAmnt):
+        self.__chips += chipAmnt
 
-    def getCurrentWinnings(self):
-        return self.__currentWinnings
+    def getIsAllIn(self):
+        return self.__isAllIn
 
-    def getHand(self):
-        return self.__hand
-
-    def changeBalance(self, num):
-        self.__balance += num
-        return True
-
-    def setLastBet(self, num):
-        self.__lastBet = num
-        return True
-
-    def addToCurrentWinnings(self,num):
-        self.__currentWinnings += num
-        return True
-
-    def addCard(self, card):
-        self.__hand.append(card)
-        return True
-
-    def removeCard(self, card):
-        self.__hand.pop(self.__hand.index(card))
-        return True
-
-    def getPlayer(self):
-        PlayerStr = self.__playerName + " has balance of: " + str(self.__balance) + " his last bet: " + str(self.__lastBet) + " And his hand is currently: \n"
-
-        for i in self.__hand:
-            PlayerStr += i + ", "
-
-        return PlayerStr
-
-    def getCombinations(self):
-        return self.__combinations
-
-    def setCombinations(self, array):
-        self.__combinations = array
-
-    def setHand(self, hand):
-        self.__hand = hand
-
+    def bet(self, chipAmnt):
+        if chipAmnt <= self.__chips:
+            if chipAmnt == self.__chips:
+                self.__isAllIn = True
+            self.givePlayerChips(chipAmnt*-1)
+            return chipAmnt
+        else:
+            return False
