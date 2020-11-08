@@ -1,10 +1,12 @@
-from flask import Flask
+from flask import *
+from flaskwebgui import *
 
 app = Flask(__name__)
 
+ui = FlaskUI(app)
+
 @app.route('/')
 def hello_world():
-    return "Hello, World!"
+    return render_template('PokerApp.html')
 
-if __name__ == "__main__":
-    app.run(debug=True)
+ui.run()

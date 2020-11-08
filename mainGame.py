@@ -1,10 +1,8 @@
 from tkinter import *
 from tkinter.font import *
-import Card as c
 import socket
-import requests as req
-import flask as fl
-
+import subprocess
+import threading as th
 
 root = Tk()
 root.title("Poker Game")
@@ -104,4 +102,11 @@ playerBox.pack()
 
 '''
 
-mainloop()
+mainThread = th.Thread(target=mainloop())
+
+mainThread.start()
+
+def callSubprocess():
+    subprocess.call(['python', 'EndPoint.py'])
+
+th1 = th.Thread(target = callSubprocess())
