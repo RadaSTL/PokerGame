@@ -8,6 +8,7 @@ class Player(Hand):
         self.__chips = 0
         self.__hand = Hand()
         self.__isAllIn = False
+        self.__isFold = False
 
     def __repr__(self):
         return self.__name
@@ -23,6 +24,12 @@ class Player(Hand):
 
     def givePlayerChips(self, chipAmnt):
         self.__chips += chipAmnt
+
+    def getIsFold(self):
+        return self.__isFold
+
+    def setIsFod(self, bool = False):
+        self.__isFold = bool
 
     def getIsAllIn(self):
         return self.__isAllIn

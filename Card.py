@@ -12,6 +12,12 @@ class Card:
     def getCardSuit(self):
         return self.__suit
 
+    def getCardColor(self):
+        if self.__suit in (0,1):
+            return "Red"
+        else:
+            return "Black"
+
     def __repr__(self):
         suit = ""
         value = ""

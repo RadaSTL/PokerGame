@@ -17,6 +17,7 @@ class Table(Hand):
         self.__maxBet = 0
         self.__winnerCount = 0
         self.__winningPlayers = []
+        self.__foldedPlayers = []
 
     def getTableHand(self):
         return self.__hand.getHand()
@@ -37,6 +38,12 @@ class Table(Hand):
         for i in self.__players:
             if i.getPlayerName() == name:
                 return i
+
+    def getCurrentPlayerIndex(self):
+        if self.__dealerHole in range(len(self.__players) - 2):
+            return self.__dealerHole + 1
+        else:
+            return 0
 
     def setMaxBet(self, bet):
         self.__maxBet = bet
@@ -60,7 +67,7 @@ class Table(Hand):
     def reassignDealerHole(self):
         self.__dealerHole += 1
 
-        if self.__dealerHole not in range(len(self.__players)):
+        if self.__dealerHole not in range(len(self.__players)-1):
             self.__dealerHole = 0
 
     def startNewRound(self):
@@ -74,6 +81,11 @@ class Table(Hand):
         self.__maxBet = 0
         self.__winnerCount = 0
         self.__winningPlayers = []
+
+        for i in self.__foldedPlayers[::-1]:
+            self.__players.insert(i[1], i[0])
+            self.__foldedPlayers.pop()
+            i[0].setIsFod(False)
 
     def dealCards(self):
         if self.__roundCount == 0:
@@ -256,6 +268,12 @@ class Table(Hand):
 
         print(playerDict)
         print(self.__winningPlayers)
+
+    def foldPlayer(self, player):
+        index = self.__players.index(player)
+        self.__players.pop(index)
+        self.__foldedPlayers.append([player,index])
+        player.setIsFod(True)
 
 
 
