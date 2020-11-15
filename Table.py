@@ -45,14 +45,29 @@ class Table(Hand):
         else:
             return 0
 
+    def getDealerHoleIndex(self):
+        return self.__dealerHole
+
+    def getDealerPlayer(self):
+        try:
+            return self.__players[self.__dealerHole].getPlayerName()
+        except:
+            return "None"
+
     def setMaxBet(self, bet):
         self.__maxBet = bet
 
     def addPlayerToTable(self, player):
         self.__players.append(player)
 
-    def placeBet(self, bet):
-        self.__chipsPile += bet
+    def placeBet(self,player ,bet):
+        if bet >= self.__maxBet or player.getChips() == bet:
+            player.bet(bet)
+            self.__chipsPile += bet
+            self.__maxBet = bet
+            return True
+        else:
+            return False
 
     def payDividents(self):
 
@@ -273,7 +288,7 @@ class Table(Hand):
         index = self.__players.index(player)
         self.__players.pop(index)
         self.__foldedPlayers.append([player,index])
-        player.setIsFod(True)
+        player.setIsFold(True)
 
 
 

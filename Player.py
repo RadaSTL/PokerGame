@@ -28,7 +28,7 @@ class Player(Hand):
     def getIsFold(self):
         return self.__isFold
 
-    def setIsFod(self, bool = False):
+    def setIsFold(self, bool = False):
         self.__isFold = bool
 
     def getIsAllIn(self):
