@@ -19,6 +19,9 @@ class Table(Hand):
         self.__winningPlayers = []
         self.__foldedPlayers = []
 
+    def getFoldedPlayers(self):
+        return self.__foldedPlayers
+
     def getTableHand(self):
         return self.__hand.getHand()
 
@@ -39,7 +42,7 @@ class Table(Hand):
             if i.getPlayerName() == name:
                 return i
 
-    def getCurrentPlayerIndex(self):
+    def getStarterPlayerIndex(self):
         if self.__dealerHole in range(len(self.__players) - 2):
             return self.__dealerHole + 1
         else:
@@ -58,10 +61,12 @@ class Table(Hand):
         self.__maxBet = bet
 
     def addPlayerToTable(self, player):
-        self.__players.append(player)
+        newPlayer = p.Player(player)
+        self.__players.append(newPlayer)
 
-    def placeBet(self,player ,bet):
+    def placeBet(self,player,bet):
         if bet >= self.__maxBet or player.getChips() == bet:
+            player.setPlayerBet(bet)
             player.bet(bet)
             self.__chipsPile += bet
             self.__maxBet = bet
@@ -87,12 +92,12 @@ class Table(Hand):
 
     def startNewRound(self):
         self.__chipsPile = 0
-        self.__newDeck = d.Deck
+        self.__newDeck = d.Deck()
         for i in self.__players:
             i.removeHand()
         self.__hand.removeHand()
         self.__roundCount = 0
-        self.__dealerHole += 1
+        self.reassignDealerHole()
         self.__maxBet = 0
         self.__winnerCount = 0
         self.__winningPlayers = []
@@ -100,7 +105,7 @@ class Table(Hand):
         for i in self.__foldedPlayers[::-1]:
             self.__players.insert(i[1], i[0])
             self.__foldedPlayers.pop()
-            i[0].setIsFod(False)
+            i[0].setIsFold(False)
 
     def dealCards(self):
         if self.__roundCount == 0:
@@ -139,7 +144,6 @@ class Table(Hand):
                 tempList = i
                 tempList.mergeHand(self.__hand.getHand())
                 #tempList.setHand([c.Card(0,2),c.Card(1,3),c.Card(2,4),c.Card(2,5),c.Card(2,6),c.Card(3,7),c.Card(3,9)])
-                print(tempList.getHand())
                 playerDict[i.getPlayerName()] = 0
                 isStraightFlush = False
 
@@ -189,9 +193,6 @@ class Table(Hand):
                         kindsDic[j] = 1
                     else:
                         kindsDic[j] += 1
-
-                print(kindsList)
-                print(kindsDic)
                 ToKPoint = 0
                 PairCount = 0
                 TPPoint = 0
@@ -280,15 +281,19 @@ class Table(Hand):
                 self.__winningPlayers.append(self.getPlayerFromName(keys))
                 self.__winnerCount += 1
 
-
-        print(playerDict)
-        print(self.__winningPlayers)
+        if len(self.__winningPlayers) > 0:
+            return True
+        else:
+            return False
 
     def foldPlayer(self, player):
         index = self.__players.index(player)
         self.__players.pop(index)
         self.__foldedPlayers.append([player,index])
         player.setIsFold(True)
+
+    def getWinningPlayers(self):
+        return self.__winningPlayers
 
 
 

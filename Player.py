@@ -9,6 +9,7 @@ class Player(Hand):
         self.__hand = Hand()
         self.__isAllIn = False
         self.__isFold = False
+        self.__lastBet = 0
 
     def __repr__(self):
         return self.__name
@@ -20,7 +21,7 @@ class Player(Hand):
         return self.__name
 
     def getPlayerBet(self):
-        return self.__name
+        return self.__lastBet
 
     def givePlayerChips(self, chipAmnt):
         self.__chips += chipAmnt
@@ -33,6 +34,9 @@ class Player(Hand):
 
     def getIsAllIn(self):
         return self.__isAllIn
+
+    def setPlayerBet(self, bet):
+        self.__lastBet = bet
 
     def bet(self, chipAmnt):
         if chipAmnt <= self.__chips:
